@@ -41,10 +41,10 @@ function twoDigitPad(number) {
   return number.toString().padStart(2, '0');
 }
 
-/* Converts string in expected format hh:mm:ss AM/PM to number of seconds since midnight */
-function hhmmssToSeconds(hhmmss) {
-  const hhmmssArr = hhmmss.split(/:| /);
-  return 3600 * parseInt(hhmmssArr[0]) + 60 * parseInt(hhmmssArr[1]) + parseInt(hhmmssArr[2]) + (hhmmssArr[3] == 'PM' ? 12 * 3600 : 0);
+/* Converts datetime to number of seconds since midnight */
+function secondsSinceMidnight(date) {
+  const d = new Date(date);
+  return (d.getTime() - d.setHours(0,0,0,0)) / 1000;
 }
 
 /* Converts number of seconds since midnight to string formatted like hh:mm:ss (24 hour clock) */
@@ -77,7 +77,7 @@ function fromJulianDate(j) {
 }
 
 /* Roughly calculate sunrise and sunset times for a given date, latitude, and longitude using equations from https://en.wikipedia.org/wiki/Sunrise_equation */
-function calculateSunriseSunset(date, lat, lon) {
+async function calculateSunriseSunset(date, lat, lon) {
   /* Date needs to be in Julian date format and latitude in radians */
   const julianDate = toJulianDate(date);
   lat = degToRad(lat);
@@ -99,13 +99,15 @@ function calculateSunriseSunset(date, lat, lon) {
 
   const julianSunrise = solarTransit - hourAngle / 360;
   const julianSunset = solarTransit + hourAngle / 360;
-
-  console.log(julianSunrise, julianSunset);
-  console.log(fromJulianDate(julianSunrise), fromJulianDate(julianSunset));
+  
   return { sunrise: fromJulianDate(julianSunrise), sunset: fromJulianDate(julianSunset)};
 }
 
-x = calculateSunriseSunset(new Date(2021,0,4), 55.8642, -4.2518);
+function calcPromise (date, lat, lon) {
+  return new Promise ((resolve) => {
+    resolve(calculateSunriseSunset(date, lat, lon));
+  });
+}
 
 /* Prepopulate form after page load */
 document.addEventListener('DOMContentLoaded', () => {
@@ -139,13 +141,14 @@ document.getElementById('sunform').addEventListener('submit', e => {
   
   /* Set up promises to find the sunrise/sunset times for each week */
   const promises = yearArray.map(week => {
-    return fetch(`https://api.sunrise-sunset.org/json?lat=${lat}&lng=${lon}&date=${getISODate(week.date)}`)
-      .then(response => response.json())
+    return calcPromise(week.date, lat, lon)
       .then(data => {
-        week.sunriseUTC = data.results.sunrise;
-        week.sunsetUTC = data.results.sunset;
-        week.sunriseSecs = hhmmssToSeconds(week.sunriseUTC);
-        week.sunsetSecs = hhmmssToSeconds(week.sunsetUTC);
+        week.sunriseUTC = data.sunrise;
+        week.sunsetUTC = data.sunset;
+        console.log(data.sunrise);
+        console.log(week.sunriseUTC);
+        week.sunriseSecs = secondsSinceMidnight(week.sunriseUTC);
+        week.sunsetSecs = secondsSinceMidnight(week.sunsetUTC);
         /* DST fix (forward 1 hour at 1am on the last Sunday in March, and back 1 hour at 2am on the last Sunday in October) */
         if (week.date >= BSTBegin && week.date < BSTEnd) {
           week.sunriseSecs -= 3600;
@@ -181,6 +184,8 @@ document.getElementById('sunform').addEventListener('submit', e => {
       row.appendChild(createTableCell(secondsToHhmmss(week.sunsetSecs)));
       table.appendChild(row);
     });
+    
+    console.log(yearArray);
     
     /* Show graph */
     //todo
