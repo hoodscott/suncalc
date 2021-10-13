@@ -61,6 +61,52 @@ function createTableCell(data) {
   return cell;
 }
 
+function degToRad(deg) {
+  return deg * Math.PI / 180;
+}
+function radToDeg(rad) {
+  return rad * 180 / Math.PI;
+}
+
+/* convert unix ts to number of days (86400000 = 60 * 60 * 24) then add JD for unix ts epoch (1970-01-01) */
+function toJulianDate(d) {
+  return d.getTime() / 86400000 + 2440587.5;
+}
+function fromJulianDate(j) {
+  return new Date((j - 2440587.5) * 86400000);
+}
+
+/* Roughly calculate sunrise and sunset times for a given date, latitude, and longitude using equations from https://en.wikipedia.org/wiki/Sunrise_equation */
+function calculateSunriseSunset(date, lat, lon) {
+  /* Date needs to be in Julian date format and latitude in radians */
+  const julianDate = toJulianDate(date);
+  lat = degToRad(lat);
+
+  const meanSolarTime = Math.ceil(julianDate - 2451545 + 0.0008) - lon / 360;
+
+  const solarMeanAnomaly = degToRad((357.5291 + 0.98560028 * meanSolarTime) % 360);
+
+  const equationOfCentre = 1.9148 * Math.sin(solarMeanAnomaly) + 0.02 * Math.sin(2 * solarMeanAnomaly) + 0.0003 * Math.sin(3 * solarMeanAnomaly);
+
+  const eclipticLongitude = degToRad((solarMeanAnomaly + equationOfCentre + 180
+  + 102.9372) % 360);
+
+  const solarTransit = 2451545 + meanSolarTime + 0.0053 * Math.sin(solarMeanAnomaly) - 0.0069 * Math.sin(2 * eclipticLongitude);
+
+  const declinationOfSun = Math.asin(Math.sin(eclipticLongitude) * Math.sin(degToRad(23.44)));
+
+  const hourAngle = radToDeg(Math.acos((Math.sin(degToRad(-0.83)) - Math.sin(lat) * Math.sin(declinationOfSun)) / (Math.cos(lat) * Math.cos(declinationOfSun))));
+
+  const julianSunrise = solarTransit - hourAngle / 360;
+  const julianSunset = solarTransit + hourAngle / 360;
+
+  console.log(julianSunrise, julianSunset);
+  console.log(fromJulianDate(julianSunrise), fromJulianDate(julianSunset));
+  return { sunrise: fromJulianDate(julianSunrise), sunset: fromJulianDate(julianSunset)};
+}
+
+x = calculateSunriseSunset(new Date(2021,0,4), 55.8642, -4.2518);
+
 /* Prepopulate form after page load */
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('year').setAttribute('value', (new Date()).getFullYear());
