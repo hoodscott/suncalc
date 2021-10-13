@@ -205,11 +205,20 @@ document.getElementById('sunform').addEventListener('submit', e => {
         plugins: {
           legend: {
             position: 'top',
-          }
+          },
+          tooltip: {
+            callbacks: {
+              label: context => secondsToHhmmss(context.parsed.y)
+            }
+          },
         },
+        
         scales: {
           x: {
             type: 'time',
+            time: {
+              tooltipFormat:'DD MMM YYYY'
+            },
             title: {
               display: true,
               text: 'Date'
@@ -221,12 +230,7 @@ document.getElementById('sunform').addEventListener('submit', e => {
               text: 'Time'
             },
             ticks: {
-              stepSize: 60,
-              callback: (tickValue, index, ticks) => {
-                if (!(index % parseInt(ticks.length / 60))) {
-                  return secondsToHhmmss(tickValue);
-                }
-              }
+              callback: tickValue => secondsToHhmmss(tickValue)
             }
           }
         }
