@@ -1,4 +1,5 @@
 const yearResolution = 7;
+let sunriseChart = null;
 
 function findFirstMonday(year) {
   const d = new Date(year,0,1);
@@ -108,6 +109,12 @@ function calcPromise (date, lat, lon) {
   });
 }
 
+function toggleForms() {
+  Array.from(document.getElementsByClassName('form-toggle')).forEach(
+    el => el.classList.toggle('hidden')
+  );
+}
+
 function showGraph(yearArray, avgSunrise, avgSunset) {
   /* Get stripped down data arrays (easier to plug into chart.js) */
   const sunrises = yearArray.map(week => [week.date, week.sunriseSecs]);
@@ -121,7 +128,7 @@ function showGraph(yearArray, avgSunrise, avgSunset) {
     labels: labels,
     datasets: [
       {
-        label: 'Sunrise',
+        label: 'Sunrises',
         data: sunrises,
         borderColor: 'rgb(255, 99, 132)', /* red */
         backgroundColor: 'rgb(255, 99, 132, 0.5)',
@@ -192,7 +199,7 @@ function showGraph(yearArray, avgSunrise, avgSunset) {
   
   /* Show graph */
   const chartContext = document.getElementById('sungraph').getContext('2d');
-  const sunriseChart = new Chart(chartContext, config);
+  sunriseChart = new Chart(chartContext, config);
 }
 
 /* Prepopulate form after page load */
@@ -236,9 +243,7 @@ document.getElementById('sunform').addEventListener('submit', e => {
   /* Once all promises are complete, we can show the table/graph */
   Promise.all(promises).then(() => {
     /* Hide the form and show the table */
-    Array.from(document.getElementsByClassName('form-toggle')).forEach(
-      el => el.classList.toggle('hidden')
-    );
+    toggleForms();
     
     /* Calculate the average sunrise and sunset times for this year */
     let avgSunrise = yearArray.reduce((total, week) =>
@@ -268,4 +273,9 @@ document.getElementById('sunform').addEventListener('submit', e => {
   });
 });
 
-//todo add way to reset
+/* Clear graph and table and show the form again */
+document.getElementById('clear').addEventListener('click', () => {
+  toggleForms();
+  document.getElementById('suntable').innerHTML = '';
+  sunriseChart.destroy();
+});

@@ -30,12 +30,15 @@
       </div>
     </form>
     
-    <h2 id="table-title" class="form-toggle hidden"></h2>
-    <canvas id="sungraph" class="form-togglex hidden"></canvas>
-    <table class="form-toggle hidden">
-      <thead><th>Date</th><th>Sunrise</th><th>Sunset</th></thead>
-      <tbody id="suntable"></tbody>
-    </table>
+    <div class="form-toggle hidden">
+      <h2 id="table-title"></h2>
+      <canvas id="sungraph"></canvas>
+      <button type="button" id="clear">Clear</button>
+      <table>
+        <thead><th>Date</th><th>Sunrise</th><th>Sunset</th></thead>
+        <tbody id="suntable"></tbody>
+      </table>
+    </div>
     
     <footer>
       Uses <a rel="noreferrer noopener" href="https://github.com/mourner/suncalc/">SunCalc</a> <a rel="noreferrer noopener" href="https://www.chartjs.org/">Chart.js</a> <a rel="noreferrer noopener" href="https://momentjs.com/">Moment.js</a>
