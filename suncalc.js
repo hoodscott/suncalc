@@ -108,10 +108,12 @@ function calcPromise (date, lat, lon) {
   });
 }
 
-function showGraph(yearArray) {
+function showGraph(yearArray, avgSunrise, avgSunset) {
   /* Get stripped down data arrays (easier to plug into chart.js) */
   const sunrises = yearArray.map(week => [week.date, week.sunriseSecs]);
   const sunsets = yearArray.map(week => [week.date, week.sunsetSecs]);
+  const sunrisesAvg = [[yearArray[0].date, avgSunrise], [yearArray[yearArray.length - 1].date, avgSunrise]];
+  const sunsetsAvg = [[yearArray[0].date, avgSunset], [yearArray[yearArray.length - 1].date, avgSunset]];
   
   /* Set up chart.js objects */
   const labels = yearArray.map(week => week.date);
@@ -129,6 +131,22 @@ function showGraph(yearArray) {
         data: sunsets,
         borderColor: 'rgb(54, 162, 235)', /* blue */
         backgroundColor: 'rgb(54, 162, 235, 0.5)',
+      },
+      {
+        label: 'Sunrise Average',
+        data: sunrisesAvg,
+        fill: false,
+        borderColor: 'rgb(255, 99, 132)', /* red */
+        backgroundColor: 'rgb(255, 99, 132, 0.5)',
+        borderDash: [5, 5]
+      },
+      {
+        label: 'Sunset Average',
+        data: sunsetsAvg,
+        fill: false,
+        borderColor: 'rgb(54, 162, 235)', /* blue */
+        backgroundColor: 'rgb(54, 162, 235, 0.5)',
+        borderDash: [5, 5]
       }
     ]
   };
@@ -244,7 +262,7 @@ document.getElementById('sunform').addEventListener('submit', e => {
     });
     
     /* Populate and show the graph */
-    showGraph(yearArray);
+    showGraph(yearArray, avgSunrise, avgSunset);
   }).catch(err => {
      console.error(err, 'some promises failed');
   });

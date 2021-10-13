@@ -2,4 +2,7 @@
   display: none;
 }
 
+canvas {
+  max-height: 80vh;
+}
 /*todo add css */
