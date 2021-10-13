@@ -104,8 +104,77 @@ async function calculateSunriseSunset(date, lat, lon) {
 /* Little wraparound function so we can use above function as a promise */
 function calcPromise (date, lat, lon) {
   return new Promise ((resolve) => {
-    resolve(calculateSunriseSunset(date, lat, lon));
+    resolve(SunCalc.getTimes(date, lat, lon));
   });
+}
+
+function showGraph(yearArray) {
+  /* Get stripped down data arrays (easier to plug into chart.js) */
+  const sunrises = yearArray.map(week => [week.date, week.sunriseSecs]);
+  const sunsets = yearArray.map(week => [week.date, week.sunsetSecs]);
+  
+  /* Set up chart.js objects */
+  const labels = yearArray.map(week => week.date);
+  const data = {
+    labels: labels,
+    datasets: [
+      {
+        label: 'Sunrise',
+        data: sunrises,
+        borderColor: 'rgb(255, 99, 132)', /* red */
+        backgroundColor: 'rgb(255, 99, 132, 0.5)',
+      },
+      {
+        label: 'Sunsets',
+        data: sunsets,
+        borderColor: 'rgb(54, 162, 235)', /* blue */
+        backgroundColor: 'rgb(54, 162, 235, 0.5)',
+      }
+    ]
+  };
+  const config = {
+    type: 'line',
+    data: data,
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: 'top',
+        },
+        tooltip: {
+          callbacks: {
+            label: context => secondsToHhmmss(context.parsed.y)
+          }
+        },
+      },
+      
+      scales: {
+        x: {
+          type: 'time',
+          time: {
+            tooltipFormat:'DD MMM YYYY'
+          },
+          title: {
+            display: true,
+            text: 'Date'
+          }
+        },
+        y: {
+          title: {
+            display: true,
+            text: 'Time'
+          },
+          ticks: {
+            callback: tickValue => secondsToHhmmss(tickValue)
+          }
+        }
+      }
+    },
+  };
+  
+  /* Show graph */
+  const chartContext = document.getElementById('sungraph').getContext('2d');
+  const sunriseChart = new Chart(chartContext, config);
 }
 
 /* Prepopulate form after page load */
@@ -174,72 +243,8 @@ document.getElementById('sunform').addEventListener('submit', e => {
       table.appendChild(row);
     });
     
-    /* Get stripped down data arrays (easier to plug into chart.js) */
-    const sunrises = yearArray.map(week => [week.date, week.sunriseSecs]);
-    const sunsets = yearArray.map(week => [week.date, week.sunsetSecs]);
-    
-    /* Set up chart.js objects */
-    const labels = yearArray.map(week => week.date);
-    const data = {
-      labels: labels,
-      datasets: [
-        {
-          label: 'Sunrise',
-          data: sunrises,
-          borderColor: 'rgb(255, 99, 132)', /* red */
-          backgroundColor: 'rgb(255, 99, 132, 0.5)',
-        },
-        {
-          label: 'Sunsets',
-          data: sunsets,
-          borderColor: 'rgb(54, 162, 235)', /* blue */
-          backgroundColor: 'rgb(54, 162, 235, 0.5)',
-        }
-      ]
-    };
-    const config = {
-      type: 'line',
-      data: data,
-      options: {
-        responsive: true,
-        plugins: {
-          legend: {
-            position: 'top',
-          },
-          tooltip: {
-            callbacks: {
-              label: context => secondsToHhmmss(context.parsed.y)
-            }
-          },
-        },
-        
-        scales: {
-          x: {
-            type: 'time',
-            time: {
-              tooltipFormat:'DD MMM YYYY'
-            },
-            title: {
-              display: true,
-              text: 'Date'
-            }
-          },
-          y: {
-            title: {
-              display: true,
-              text: 'Time'
-            },
-            ticks: {
-              callback: tickValue => secondsToHhmmss(tickValue)
-            }
-          }
-        }
-      },
-    };
-    
-    /* Show graph */
-    const chartContext = document.getElementById('sungraph').getContext('2d');
-    const sunriseChart = new Chart(chartContext, config);
+    /* Populate and show the graph */
+    showGraph(yearArray);
   }).catch(err => {
      console.error(err, 'some promises failed');
   });
