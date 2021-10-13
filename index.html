@@ -31,17 +31,18 @@
     </form>
     
     <h2 id="table-title" class="form-toggle hidden"></h2>
+    <canvas id="sungraph" class="form-togglex hidden"></canvas>
     <table class="form-toggle hidden">
       <thead><th>Date</th><th>Sunrise</th><th>Sunset</th></thead>
-      <tbody id="suntable">
-      
-      </tbody>
+      <tbody id="suntable"></tbody>
     </table>
-    <canvas id="sungraph" class="form-togglex hidden"></canvas>
     
     <footer>
     </footer>
     
+    <script src="ext/chart.js"></script>
+    <script src="ext/moment.js"></script>
+    <script src="ext/chartjs-adapter-moment.js"></script>
     <script src="suncalc.js"></script>
   </body>
 </html>

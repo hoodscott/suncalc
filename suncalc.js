@@ -20,15 +20,13 @@ function lastSundayInMonth(year, month) {
 function populateYearArray(year) {
   const d = findFirstMonday(year);
   const yearArray = [];
-  let limit = 0;
-  while (d.getFullYear() === year && limit < 2) {
+  while (d.getFullYear() === year) {
     yearArray.push({
       date: new Date(d),
       sunriseUTC: null, sunsetUTC: null,
       sunriseSecs: null, sunsetSecs: null
     });
     d.setDate(d.getDate() + yearResolution);
-    limit++;
   }
   return yearArray;
 }
@@ -103,6 +101,7 @@ async function calculateSunriseSunset(date, lat, lon) {
   return { sunrise: fromJulianDate(julianSunrise), sunset: fromJulianDate(julianSunset)};
 }
 
+/* Little wraparound function so we can use above function as a promise */
 function calcPromise (date, lat, lon) {
   return new Promise ((resolve) => {
     resolve(calculateSunriseSunset(date, lat, lon));
@@ -136,24 +135,14 @@ document.getElementById('sunform').addEventListener('submit', e => {
   const year = parseInt(formData.get('year'));
   const yearArray = populateYearArray(year);
   
-  const BSTBegin = lastSundayInMonth(year, 3);
-  const BSTEnd = lastSundayInMonth(year, 10);
-  
   /* Set up promises to find the sunrise/sunset times for each week */
   const promises = yearArray.map(week => {
     return calcPromise(week.date, lat, lon)
       .then(data => {
         week.sunriseUTC = data.sunrise;
         week.sunsetUTC = data.sunset;
-        console.log(data.sunrise);
-        console.log(week.sunriseUTC);
         week.sunriseSecs = secondsSinceMidnight(week.sunriseUTC);
         week.sunsetSecs = secondsSinceMidnight(week.sunsetUTC);
-        /* DST fix (forward 1 hour at 1am on the last Sunday in March, and back 1 hour at 2am on the last Sunday in October) */
-        if (week.date >= BSTBegin && week.date < BSTEnd) {
-          week.sunriseSecs -= 3600;
-          week.sunsetSecs -= 3600;
-        }
       });
   });
   
@@ -185,10 +174,68 @@ document.getElementById('sunform').addEventListener('submit', e => {
       table.appendChild(row);
     });
     
-    console.log(yearArray);
+    /* Get stripped down data arrays (easier to plug into chart.js) */
+    const sunrises = yearArray.map(week => [week.date, week.sunriseSecs]);
+    const sunsets = yearArray.map(week => [week.date, week.sunsetSecs]);
+    
+    /* Set up chart.js objects */
+    const labels = yearArray.map(week => week.date);
+    const data = {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Sunrise',
+          data: sunrises,
+          borderColor: 'rgb(255, 99, 132)', /* red */
+          backgroundColor: 'rgb(255, 99, 132, 0.5)',
+        },
+        {
+          label: 'Sunsets',
+          data: sunsets,
+          borderColor: 'rgb(54, 162, 235)', /* blue */
+          backgroundColor: 'rgb(54, 162, 235, 0.5)',
+        }
+      ]
+    };
+    const config = {
+      type: 'line',
+      data: data,
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'top',
+          }
+        },
+        scales: {
+          x: {
+            type: 'time',
+            title: {
+              display: true,
+              text: 'Date'
+            }
+          },
+          y: {
+            title: {
+              display: true,
+              text: 'Time'
+            },
+            ticks: {
+              stepSize: 60,
+              callback: (tickValue, index, ticks) => {
+                if (!(index % parseInt(ticks.length / 60))) {
+                  return secondsToHhmmss(tickValue);
+                }
+              }
+            }
+          }
+        }
+      },
+    };
     
     /* Show graph */
-    //todo
+    const chartContext = document.getElementById('sungraph').getContext('2d');
+    const sunriseChart = new Chart(chartContext, config);
   }).catch(err => {
      console.error(err, 'some promises failed');
   });
