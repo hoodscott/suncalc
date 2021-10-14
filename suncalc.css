@@ -1,9 +1,97 @@
-.hidden {
-  display: none;
+html, body {
+  height:100%;
+  background: mintcream;
+}
+
+body {
+  /* System Fonts as used by Medium and WordPress */
+  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+*,:after,:before {
+  box-sizing: border-box
+}
+
+header, footer {
+  background: midnightblue;
+  color:white;
+  padding: 0.5rem;
+  text-align: center;
+}
+footer {
+  margin-top: auto;
+  background: aliceblue;
+  color:black;
+}
+main {
+  margin: .5rem;
+}
+
+h1 {
+  margin: 0;
+}
+h2 {
+  font-size: 1.25rem;
+  margin: .5rem 0;
+}
+
+form {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr 1fr;
+  grid-gap: .25rem .5rem;
+  padding: .25rem;
+}
+form, .table-holder {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+#get-location {
+  grid-column: 3 / 4;
+  grid-row: 1 / span 2;
+}
+#reset {
+  grid-column: 3 / 4;
 }
 
 canvas {
   max-height: 80vh;
+  min-height: 50vh;
 }
 
-/*todo add css */
+table, th, td {
+  border: 1px solid grey;
+  padding: .25rem;
+}
+table {
+  border-collapse: collapse;
+  margin-left: auto;
+  margin-right: auto;
+}
+#clear {
+  display: block;
+  margin-left: auto;
+}
+
+button {
+	border: 0.125rem solid white;
+	border-radius: 0.5rem;
+	color: white;
+  background: green;
+}
+button:hover{
+	color: black;
+	background-image: linear-gradient(rgba(255, 255, 255, 0.4) 0 0);
+  border-color: black;
+}
+button#get-location {background: skyblue;}
+button#clear, button#reset {background: red;}
+button#clear {width: 25%;}
+
+.hidden {
+  display: none;
+}

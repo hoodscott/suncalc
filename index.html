@@ -10,35 +10,33 @@
     <link href="images/256.png" rel="apple-touch-icon"/-->
   </head>
   <body>
-    <form id="sunform" name="sunform" class="form-toggle">
-      <button id="get-location" type="button">Use my location</button>
-      <div>
-        <label for="lat">Latitude</label>
+    <header><h1>Sunrise Calculator</h1></header>
+    <main>
+      <form id="sunform" name="sunform" class="form-toggle">
+        <button id="get-location" type="button">Use my</br>location</button>
+        <label for="lat">Latitude:</label>
         <input id="lat" name="lat" type="number" required min="-90" max="90" step="0.0000001"/>
+          <label for="lon">Longitude:</label>
+          <input id="lon" name="lon" type="number" required min="-180" max="80" step="0.0000001"/>
+          <label for="year">Year:</label>
+          <input id="year" name="year" type="number" required min="1975" max="2045"/>
+          <button type="submit">Submit</button>
+          <button type="reset" id="reset">Reset</button>
+        </div>
+      </form>
+      
+      <div class="form-toggle hidden">
+        <canvas id="sungraph"></canvas>
       </div>
-      <div>
-        <label for="lon">Longitude</label>
-        <input id="lon" name="lon" type="number" required min="-180" max="80" step="0.0000001"/>
+      <div class="form-toggle table-holder hidden">
+        <button type="button" id="clear">Clear</button>
+        <h2 id="table-title"></h2>
+        <table>
+          <thead><th>Date</th><th>Sunrise</th><th>Sunset</th></thead>
+          <tbody id="suntable"></tbody>
+        </table>
       </div>
-      <div>
-        <label for="year">Year</label>
-        <input id="year" name="year" type="number" required min="1975" max="2045"/>
-      </div>
-      <div>
-        <button type="submit">Submit</button>
-        <button type="reset" id="reset">Reset</button>
-      </div>
-    </form>
-    
-    <div class="form-toggle hidden">
-      <h2 id="table-title"></h2>
-      <canvas id="sungraph"></canvas>
-      <button type="button" id="clear">Clear</button>
-      <table>
-        <thead><th>Date</th><th>Sunrise</th><th>Sunset</th></thead>
-        <tbody id="suntable"></tbody>
-      </table>
-    </div>
+    </main>
     
     <footer>
       Uses <a rel="noreferrer noopener" href="https://github.com/mourner/suncalc/">SunCalc</a> <a rel="noreferrer noopener" href="https://www.chartjs.org/">Chart.js</a> <a rel="noreferrer noopener" href="https://momentjs.com/">Moment.js</a>

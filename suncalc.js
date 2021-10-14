@@ -162,6 +162,7 @@ function showGraph(yearArray, avgSunrise, avgSunset) {
     data: data,
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       plugins: {
         legend: {
           position: 'top',
