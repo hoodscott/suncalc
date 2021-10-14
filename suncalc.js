@@ -141,8 +141,8 @@ function showGraph(yearArray, meanSunrise, meanSunset) {
   });
   
   /* Create best fit lines based on the mean */
-  const sunrisesAvg = createBestFitLine(yearArray[0].date, yearArray[yearArray.length - 1].date, meanSunrise);
-  const sunsetsAvg = createBestFitLine(yearArray[0].date, yearArray[yearArray.length - 1].date, meanSunset);
+  const sunrisesMean = createBestFitLine(yearArray[0].date, yearArray[yearArray.length - 1].date, meanSunrise);
+  const sunsetsMean = createBestFitLine(yearArray[0].date, yearArray[yearArray.length - 1].date, meanSunset);
   
   /* Set up chart.js objects */
   const labels = yearArray.map(day => day.date);
@@ -162,16 +162,16 @@ function showGraph(yearArray, meanSunrise, meanSunset) {
         backgroundColor: 'rgb(54, 162, 235, 0.5)',
       },
       {
-        label: 'Sunrise Average',
-        data: sunrisesAvg,
+        label: 'Sunrise Mean',
+        data: sunrisesMean,
         fill: false,
         borderColor: 'rgb(255, 99, 132)', /* red */
         backgroundColor: 'rgb(255, 99, 132, 0.5)',
         borderDash: [5, 5]
       },
       {
-        label: 'Sunset Average',
-        data: sunsetsAvg,
+        label: 'Sunset Mean',
+        data: sunsetsMean,
         fill: false,
         borderColor: 'rgb(54, 162, 235)', /* blue */
         backgroundColor: 'rgb(54, 162, 235, 0.5)',
@@ -272,8 +272,6 @@ document.getElementById('sunform').addEventListener('submit', e => {
     let minSunset = Number.MAX_VALUE;
     let maxSunrise = Number.MIN_VALUE;
     let maxSunset = Number.MIN_VALUE;
-    let sunriseBefore = 0;
-    let sunsetBefore = 0;
     const medianSunrise = calculateMedian(yearArray.map(day => day.sunriseSecs));
     const medianSunset = calculateMedian(yearArray.map(day => day.sunsetSecs));
     
@@ -285,10 +283,11 @@ document.getElementById('sunform').addEventListener('submit', e => {
       if (day.sunriseSecs > maxSunrise) maxSunrise = day.sunriseSecs;
       if (day.sunsetSecs > maxSunset) maxSunset = day.sunsetSecs;
     });
-    
     meanSunrise /= yearArray.length;
     meanSunset /= yearArray.length;
     
+    let sunriseBefore = 0;
+    let sunsetBefore = 0;
     yearArray.forEach(day => {
       if (day.sunriseSecs < meanSunrise) sunriseBefore++;
       if (day.sunsetSecs < meanSunset) sunsetBefore++;
@@ -296,10 +295,10 @@ document.getElementById('sunform').addEventListener('submit', e => {
     
     /* Populate the table */
     const table = document.getElementById('suntable');
-    table.appendChild(createRow('Avg. (mean)', secondsToHhmmss(meanSunrise), secondsToHhmmss(meanSunset)));
+    table.appendChild(createRow('Mean', secondsToHhmmss(meanSunrise), secondsToHhmmss(meanSunset)));
     table.appendChild(createRow('Days Before', sunriseBefore, sunsetBefore));
     table.appendChild(createRow('Days After', yearArray.length - sunriseBefore, yearArray.length - sunsetBefore));
-    table.appendChild(createRow('Avg. (median)', secondsToHhmmss(medianSunrise), secondsToHhmmss(medianSunset)));
+    table.appendChild(createRow('Median', secondsToHhmmss(medianSunrise), secondsToHhmmss(medianSunset)));
     table.appendChild(createRow('Earliest', secondsToHhmmss(minSunrise), secondsToHhmmss(minSunset)));
     table.appendChild(createRow('Latest', secondsToHhmmss(maxSunrise), secondsToHhmmss(maxSunset)));
     
