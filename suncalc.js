@@ -1,14 +1,6 @@
 const graphResolution = 7;
 let sunriseChart = null;
 
-function findFirstMonday(year) {
-  const d = new Date(year,0,1);
-  while (d.getDay() != 1) {
-    d.setDate(d.getDate() + 1);
-  }
-  return d;
-}
-
 function lastSundayInMonth(year, month) {
   const d = new Date(year, month, 1);
   d.setDate(d.getDate() - 1);
@@ -19,7 +11,7 @@ function lastSundayInMonth(year, month) {
 }
 
 function populateYearArray(year) {
-  const d = findFirstMonday(year);
+  const d = new Date(year,0,1);
   const yearArray = [];
   while (d.getFullYear() === year) {
     yearArray.push({
@@ -71,7 +63,7 @@ function createRow(stat, sunriseData, sunsetData) {
 function calculateMedian(days) {
   days.sort();
   if (days.length % 2) {
-    const half = Math.floor(days.length);
+    const half = Math.floor(days.length / 2);
     return (days[half] + days[half + 1]) / 2;
   } else {
     return days[days.length / 2];
@@ -235,8 +227,6 @@ function showGraph(yearArray, meanSunrise, meanSunset) {
 /* Prepopulate form after page load */
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('year').setAttribute('value', (new Date()).getFullYear());
-  document.getElementById('lat').value = '55.8642';
-  document.getElementById('lon').value = '-4.2518';
 });
 
 /* Fill in lat/lon data using browser's geolocation */
