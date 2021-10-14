@@ -1,4 +1,4 @@
-const yearResolution = 7;
+const graphResolution = 7;
 let sunriseChart = null;
 
 function findFirstMonday(year) {
@@ -27,7 +27,7 @@ function populateYearArray(year) {
       sunriseUTC: null, sunsetUTC: null,
       sunriseSecs: null, sunsetSecs: null
     });
-    d.setDate(d.getDate() + yearResolution);
+    d.setDate(d.getDate() + 1);
   }
   return yearArray;
 }
@@ -54,10 +54,28 @@ function secondsToHhmmss(seconds) {
          twoDigitPad(seconds % 2600 % 60);
 }
 
-function createTableCell(data) {
-  let cell = document.createElement('td');
-  cell.textContent = data;
+function createHTMLElement(el, textContent) {
+  let cell = document.createElement(el);
+  cell.textContent = textContent;
   return cell;
+}
+
+function createRow(stat, sunriseData, sunsetData) {
+  const row = document.createElement('tr');
+  row.appendChild(createHTMLElement('th', stat));
+  row.appendChild(createHTMLElement('td', sunriseData));
+  row.appendChild(createHTMLElement('td', sunsetData));
+  return row;
+}
+
+function calculateMedian(days) {
+  days.sort();
+  if (days.length % 2) {
+    const half = Math.floor(days.length);
+    return (days[half] + days[half + 1]) / 2;
+  } else {
+    return days[days.length / 2];
+  }
 }
 
 function degToRad(deg) {
@@ -76,7 +94,7 @@ function fromJulianDate(j) {
 }
 
 /* Roughly calculate sunrise and sunset times for a given date, latitude, and longitude using equations from https://en.wikipedia.org/wiki/Sunrise_equation */
-async function calculateSunriseSunset(date, lat, lon) {
+function calculateSunriseSunset(date, lat, lon) {
   /* Date needs to be in Julian date format and latitude in radians */
   const julianDate = toJulianDate(date);
   lat = degToRad(lat);
@@ -115,15 +133,27 @@ function toggleForms() {
   );
 }
 
-function showGraph(yearArray, avgSunrise, avgSunset) {
+function createBestFitLine(x1, x2, y) {
+  return [[x1, y], [x2, y]]
+}
+
+function showGraph(yearArray, meanSunrise, meanSunset) {
   /* Get stripped down data arrays (easier to plug into chart.js) */
-  const sunrises = yearArray.map(week => [week.date, week.sunriseSecs]);
-  const sunsets = yearArray.map(week => [week.date, week.sunsetSecs]);
-  const sunrisesAvg = [[yearArray[0].date, avgSunrise], [yearArray[yearArray.length - 1].date, avgSunrise]];
-  const sunsetsAvg = [[yearArray[0].date, avgSunset], [yearArray[yearArray.length - 1].date, avgSunset]];
+  const sunrises = [];
+  const sunsets = [];
+  yearArray.forEach((day, index) => {
+    if (index % graphResolution === 0) {
+      sunrises.push([day.date, day.sunriseSecs]);
+      sunsets.push([day.date, day.sunsetSecs]);
+    }
+  });
+  
+  /* Create best fit lines based on the mean */
+  const sunrisesAvg = createBestFitLine(yearArray[0].date, yearArray[yearArray.length - 1].date, meanSunrise);
+  const sunsetsAvg = createBestFitLine(yearArray[0].date, yearArray[yearArray.length - 1].date, meanSunset);
   
   /* Set up chart.js objects */
-  const labels = yearArray.map(week => week.date);
+  const labels = yearArray.map(day => day.date);
   const data = {
     labels: labels,
     datasets: [
@@ -173,7 +203,6 @@ function showGraph(yearArray, avgSunrise, avgSunset) {
           }
         },
       },
-      
       scales: {
         x: {
           type: 'time',
@@ -230,14 +259,14 @@ document.getElementById('sunform').addEventListener('submit', e => {
   const year = parseInt(formData.get('year'));
   const yearArray = populateYearArray(year);
   
-  /* Set up promises to find the sunrise/sunset times for each week */
-  const promises = yearArray.map(week => {
-    return calcPromise(week.date, lat, lon)
+  /* Set up promises to find the sunrise/sunset times for each day */
+  const promises = yearArray.map(day => {
+    return calcPromise(day.date, lat, lon)
       .then(data => {
-        week.sunriseUTC = data.sunrise;
-        week.sunsetUTC = data.sunset;
-        week.sunriseSecs = secondsSinceMidnight(week.sunriseUTC);
-        week.sunsetSecs = secondsSinceMidnight(week.sunsetUTC);
+        day.sunriseUTC = data.sunrise;
+        day.sunsetUTC = data.sunset;
+        day.sunriseSecs = secondsSinceMidnight(day.sunriseUTC);
+        day.sunsetSecs = secondsSinceMidnight(day.sunsetUTC);
       });
   });
   
@@ -247,28 +276,45 @@ document.getElementById('sunform').addEventListener('submit', e => {
     toggleForms();
     
     /* Calculate the average sunrise and sunset times for this year */
-    let avgSunrise = yearArray.reduce((total, week) =>
-      total + week.sunriseSecs, 0
-    );
-    avgSunrise /= yearArray.length;
-    let avgSunset = yearArray.reduce((total, week) =>
-      total + week.sunsetSecs, 0
-    );
-    avgSunset /= yearArray.length;
-    document.getElementById('table-title').textContent = `In ${year} average sunrise is ${secondsToHhmmss(avgSunrise)} and average sunset is ${secondsToHhmmss(avgSunset)}`;
+    let meanSunrise = 0;
+    let meanSunset = 0;
+    let minSunrise = Number.MAX_VALUE;
+    let minSunset = Number.MAX_VALUE;
+    let maxSunrise = Number.MIN_VALUE;
+    let maxSunset = Number.MIN_VALUE;
+    let sunriseBefore = 0;
+    let sunsetBefore = 0;
+    const medianSunrise = calculateMedian(yearArray.map(day => day.sunriseSecs));
+    const medianSunset = calculateMedian(yearArray.map(day => day.sunsetSecs));
+    
+    yearArray.forEach(day => {
+      meanSunrise += day.sunriseSecs;
+      meanSunset += day.sunsetSecs;
+      if (day.sunriseSecs < minSunrise) minSunrise = day.sunriseSecs;
+      if (day.sunsetSecs < minSunset) minSunset = day.sunsetSecs;
+      if (day.sunriseSecs > maxSunrise) maxSunrise = day.sunriseSecs;
+      if (day.sunsetSecs > maxSunset) maxSunset = day.sunsetSecs;
+    });
+    
+    meanSunrise /= yearArray.length;
+    meanSunset /= yearArray.length;
+    
+    yearArray.forEach(day => {
+      if (day.sunriseSecs < meanSunrise) sunriseBefore++;
+      if (day.sunsetSecs < meanSunset) sunsetBefore++;
+    });
     
     /* Populate the table */
     const table = document.getElementById('suntable');
-    yearArray.forEach(week => {
-      const row = document.createElement('tr');
-      row.appendChild(createTableCell(getISODate(week.date)));
-      row.appendChild(createTableCell(secondsToHhmmss(week.sunriseSecs)));
-      row.appendChild(createTableCell(secondsToHhmmss(week.sunsetSecs)));
-      table.appendChild(row);
-    });
+    table.appendChild(createRow('Avg. (mean)', secondsToHhmmss(meanSunrise), secondsToHhmmss(meanSunset)));
+    table.appendChild(createRow('Days Before', sunriseBefore, sunsetBefore));
+    table.appendChild(createRow('Days After', yearArray.length - sunriseBefore, yearArray.length - sunsetBefore));
+    table.appendChild(createRow('Avg. (median)', secondsToHhmmss(medianSunrise), secondsToHhmmss(medianSunset)));
+    table.appendChild(createRow('Earliest', secondsToHhmmss(minSunrise), secondsToHhmmss(minSunset)));
+    table.appendChild(createRow('Latest', secondsToHhmmss(maxSunrise), secondsToHhmmss(maxSunset)));
     
     /* Populate and show the graph */
-    showGraph(yearArray, avgSunrise, avgSunset);
+    showGraph(yearArray, meanSunrise, meanSunset);
   }).catch(err => {
      console.error(err, 'some promises failed');
   });
